@@ -7,10 +7,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Whisper Web - Next.js",
   description: "ML-powered speech recognition directly in your browser",
-  // Add CSP for external script from jsdelivr (AudioMotion)
-  other: {
-    "script-src": "'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
-  }
 };
 
 export default function RootLayout({
