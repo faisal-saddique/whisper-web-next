@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 
 type TranscriptChunk = {
   text: string;
@@ -15,20 +15,6 @@ interface TranscriptData {
 
 interface Props {
   transcribedData: TranscriptData | undefined;
-}
-
-// Helper function to format timestamps
-function formatAudioTimestamp(time: number) {
-  function padTime(time: number) {
-    return String(time).padStart(2, "0");
-  }
-  
-  const hours = Math.floor(time / (60 * 60));
-  time -= hours * (60 * 60);
-  const minutes = Math.floor(time / 60);
-  time -= minutes * 60;
-  const seconds = Math.floor(time);
-  return `${hours ? padTime(hours) + ":" : ""}${padTime(minutes)}:${padTime(seconds)}`;
 }
 
 export default function Transcript({ transcribedData }: Props) {
@@ -65,43 +51,27 @@ export default function Transcript({ transcribedData }: Props) {
     saveBlob(blob, "transcript.json");
   };
 
-  // Scroll to the bottom when the component updates
-  useEffect(() => {
-    if (divRef.current) {
-      const diff = Math.abs(
-        divRef.current.offsetHeight +
-          divRef.current.scrollTop -
-          divRef.current.scrollHeight
-      );
-
-      if (diff <= 64) {
-        // We're close enough to the bottom, so scroll to the bottom
-        divRef.current.scrollTop = divRef.current.scrollHeight;
-      }
-    }
-  });
-
   if (!transcribedData) {
     return null;
   }
+
+  // Combine all chunks into a single text
+  const combinedText = transcribedData.chunks
+    .map(chunk => chunk.text)
+    .join("")
+    .trim();
 
   return (
     <div
       ref={divRef}
       className="w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto"
     >
-      {transcribedData?.chunks &&
-        transcribedData.chunks.map((chunk, i) => (
-          <div
-            key={`${i}-${chunk.text}`}
-            className="w-full flex flex-row mb-2 bg-white rounded-lg p-4 shadow-xl shadow-black/5 ring-1 ring-slate-700/10"
-          >
-            <div className="mr-5 text-gray-500">
-              {formatAudioTimestamp(chunk.timestamp[0])}
-            </div>
-            <div>{chunk.text}</div>
-          </div>
-        ))}
+      {combinedText && (
+        <div className="w-full mb-2 bg-white rounded-lg p-4 shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+          <div>{combinedText}</div>
+        </div>
+      )}
+      
       {transcribedData && !transcribedData.isBusy && transcribedData.chunks.length > 0 && (
         <div className="w-full text-right mt-4">
           <button

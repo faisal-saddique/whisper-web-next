@@ -4,27 +4,19 @@ import AudioRecorder from '@/components/AudioRecorder';
 import Progress from '@/components/Progress';
 import Transcript from '@/components/Transcript';
 import { useTranscriber } from '@/hooks/useTranscriber';
-import { useState, useRef } from 'react';
-
+import { useState } from 'react';
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const transcriber = useTranscriber();
-  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Handle recording completion
-  const handleRecordingComplete = (blob: Blob) => {
+  // Handle recording completion and automatically start transcription
+  const handleRecordingComplete = async (blob: Blob) => {
     setAudioBlob(blob);
-    setAudioUrl(URL.createObjectURL(blob));
     transcriber.reset();
-  };
-
-  // Convert blob to AudioBuffer and start transcription
-  const handleTranscribe = async () => {
-    if (!audioBlob) return;
     
-    const arrayBuffer = await audioBlob.arrayBuffer();
+    // Automatically start transcription
+    const arrayBuffer = await blob.arrayBuffer();
     const audioCTX = new AudioContext({
       sampleRate: 16000, // Whisper expects 16kHz audio
     });
@@ -46,22 +38,6 @@ export default function Home() {
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
         <AudioRecorder onRecordingComplete={handleRecordingComplete} />
         
-        {audioUrl && (
-          <div className="mt-4 flex flex-col">
-            <button
-              onClick={handleTranscribe}
-              disabled={transcriber.isBusy || transcriber.isModelLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {transcriber.isModelLoading 
-                ? "Loading model..." 
-                : transcriber.isBusy 
-                  ? "Transcribing..." 
-                  : "Transcribe Audio"}
-            </button>
-          </div>
-        )}
-        
         {transcriber.progressItems.length > 0 && (
           <div className="mt-4 w-full">
             <label className="text-sm text-gray-600">
@@ -75,6 +51,15 @@ export default function Home() {
                 />
               </div>
             ))}
+          </div>
+        )}
+
+        {transcriber.isBusy && (
+          <div className="mt-4 w-full">
+            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+              <p className="font-bold">Transcribing...</p>
+              <p>Please wait while we process your audio.</p>
+            </div>
           </div>
         )}
       </div>
